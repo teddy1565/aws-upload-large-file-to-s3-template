@@ -21,11 +21,14 @@ let task_count = 0;
 let upload_result = [];
 let part_number = 0;
 let metadata = {};
+let done_size = 0;
 
 fileReadStream.on("data", (chunk) => {
     task_count++;
     console.log(`task[${part_number}] start`);
     uploadPart(metadata, chunk).then(([part_numberId, response]) => {
+        done_size += bufferSizeLimit;
+        console.log(`upload size: ${done_size / 1024 / 1024} MB`);
         console.log(`task[${part_numberId}] done`);
         upload_result[part_numberId] = response;
         task_count--;
