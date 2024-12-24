@@ -1,10 +1,19 @@
 const { PutObjectCommand,  S3Client, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } = require("@aws-sdk/client-s3");
 const fs = require("fs");
 const credentials = require("./secret.json");
+const path = require("path");
 
-const { bucketName, key, task_limit, bufferSizeLimit, region } = require("./config.json");
+/**
+ * @param { string } bucketName - S3 bucket name
+ * @param { string } filePath - file path to upload
+ * @param { string } key - S3 object key (what you want to name the file in S3)
+ * @param { number } task_limit - number of tasks to run concurrently
+ * @param { number } bufferSizeLimit - buffer size limit for each task
+ * @param { string } region - AWS region
+ */
+const { bucketName, filePath, key, task_limit, bufferSizeLimit, region } = require("./options.json");
 
-const fileReadStream = fs.createReadStream(key, { highWaterMark: bufferSizeLimit });
+const fileReadStream = fs.createReadStream(path.join(filePath), { highWaterMark: bufferSizeLimit });
 
 fileReadStream.pause();
 
@@ -15,7 +24,9 @@ let metadata = {};
 
 fileReadStream.on("data", (chunk) => {
     task_count++;
+    console.log(`task[${part_number}] start`);
     uploadPart(metadata, chunk).then(([part_numberId, response]) => {
+        console.log(`task[${part_numberId}] done`);
         upload_result[part_numberId] = response;
         task_count--;
         if (task_count < task_limit) {
