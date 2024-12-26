@@ -22,14 +22,20 @@ let upload_result = [];
 let part_number = 0;
 let metadata = {};
 let done_size = 0;
+const start_time_obj = new Date();
+const start_timestamp = start_time_obj.getTime();
 
 fileReadStream.on("data", (chunk) => {
     task_count++;
     console.log(`task[${part_number}] start`);
     uploadPart(metadata, chunk).then(([part_numberId, response]) => {
         done_size += bufferSizeLimit;
-        console.log(`upload size: ${done_size / 1024 / 1024} MB`);
-        console.log(`task[${part_numberId}] done`);
+        const elapsed_time = (Date.now() - start_timestamp) / 1000;
+        const speed = done_size / elapsed_time;
+        console.log(`task start: ${start_time_obj.toLocaleString("sv")}`);
+        console.log(`elapsed time: ${elapsed_time} s, speed: ${speed / 1024 / 1024} MB/s`);
+        console.log(`upload size: ${done_size / 1024 / 1024} MB, task[${part_numberId}] done`);
+        console.log("\n");
         upload_result[part_numberId] = response;
         task_count--;
         if (task_count < task_limit) {
