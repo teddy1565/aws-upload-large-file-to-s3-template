@@ -10,8 +10,9 @@ const path = require("path");
  * @param { number } task_limit - number of tasks to run concurrently
  * @param { number } bufferSizeLimit - buffer size limit for each task
  * @param { string } region - AWS region
+ * @param { number } client_max_sockets - max sockets for client, default is 50, better less then 1024
  */
-const { bucketName, filePath, key, task_limit, bufferSizeLimit, region } = require("./options.json");
+const { bucketName, filePath, key, task_limit, bufferSizeLimit, region, client_max_sockets } = require("./options.json");
 
 const fileReadStream = fs.createReadStream(path.join(filePath), { highWaterMark: bufferSizeLimit });
 
@@ -87,7 +88,12 @@ fileReadStream.on("end", async () => {
 
 const client = new S3Client({
     credentials: credentials,
-    region: region
+    region: region,
+    requestHandler: {
+        httpsAgent: {
+            maxSockets: client_max_sockets || 50
+        }
+    }
 });
 
 const command = new CreateMultipartUploadCommand({
